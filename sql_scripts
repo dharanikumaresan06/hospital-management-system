@@ -1,0 +1,226 @@
+use new_schema1
+
+create database hospital_management_system;
+
+use hospital_management_system;
+
+create table patients (
+    patient_id int primary key,
+    patient_name varchar(50),
+    email varchar(100),
+    phone varchar(15),
+    city varchar(30),
+    blood_group varchar(5)
+);
+
+insert into patients values
+(101, 'Aadhira', 'aadhira@gmail.com', '9123456780', 'Chennai', 'O+'),
+(102, 'Nithish', 'nithish@gmail.com', '9123456781', 'Bangalore', 'A+'),
+(103, 'Keerthana', 'keerthana@gmail.com', '9123456782', 'Hyderabad', 'B+'),
+(104, 'Vignesh', 'vignesh@gmail.com', '9123456783', 'Madurai', 'O-'),
+(105, 'Harini', 'harini@gmail.com', '9123456784', 'Coimbatore', 'AB+'),
+(106, 'Sanjay', 'sanjay@gmail.com', '9123456785', 'Trichy', 'A-');
+
+select * from patients;
+
+create table departments (
+    department_id int primary key,
+    department_name varchar(50),
+    department_location varchar(30)
+);
+
+insert into departments values
+(1001, 'Cardiology', 'Block A'),
+(1002, 'Neurology', 'Block B'),
+(1003, 'Orthopedics', 'Block C'),
+(1004, 'Pediatrics', 'Block D'),
+(1005, 'Dermatology', 'Block E');
+
+select * from departments;
+
+create table doctors (
+    doctor_id int primary key,
+    doctor_name varchar(50),
+    specialization varchar(50),
+    phone varchar(15),
+    department_id int
+);
+
+insert into doctors values
+(2001, 'Dr. Kumar', 'Cardiology', '9876500001', 1001),
+(2002, 'Dr. Priya', 'Neurology', '9876500002', 1002),
+(2003, 'Dr. Ravi', 'Orthopedics', '9876500003', 1003),
+(2004, 'Dr. Meena', 'Pediatrics', '9876500004', 1004),
+(2005, 'Dr. Anitha', 'Dermatology', '9876500005', 1005),
+(2006, 'Dr. Arun', 'Cardiology', '9876500006', 1001);
+
+select * from doctors;
+
+create table appointments (
+    appointment_id int primary key,
+    patient_id int,
+    doctor_id int,
+    appointment_date date,
+    appointment_time time,
+    status varchar(30)
+);
+
+insert into appointments values
+(3001, 101, 2001, '2026-01-10', '09:30:00', 'Completed'),
+(3002, 102, 2002, '2026-01-11', '10:00:00', 'Completed'),
+(3003, 103, 2003, '2026-01-12', '11:00:00', 'Completed'),
+(3004, 104, 2004, '2026-01-13', '12:00:00', 'Scheduled'),
+(3005, 105, 2005, '2026-01-14', '14:00:00', 'Completed'),
+(3006, 101, 2006, '2026-01-15', '15:00:00', 'Scheduled'),
+(3007, 106, 2001, '2026-01-16', '16:00:00', 'Cancelled');
+
+select * from appointments;
+
+create table medical_records (
+    record_id int primary key,
+    patient_id int,
+    doctor_id int,
+    diagnosis varchar(100),
+    treatment varchar(100),
+    record_date date
+);
+
+insert into medical_records values
+(4001, 101, 2001, 'Heart Disease', 'Medication', '2026-01-10'),
+(4002, 102, 2002, 'Migraine', 'Pain Management', '2026-01-11'),
+(4003, 103, 2003, 'Fracture', 'Physiotherapy', '2026-01-12'),
+(4004, 104, 2004, 'Fever', 'Medication', '2026-01-13'),
+(4005, 105, 2005, 'Skin Allergy', 'Cream Treatment', '2026-01-14');
+
+select * from medical_records;
+
+create table bills (
+    bill_id int primary key,
+    patient_id int,
+    appointment_id int,
+    bill_amount decimal(10,2),
+    payment_status varchar(20)
+);
+
+insert into bills values
+(5001, 101, 3001, 5000, 'Paid'),
+(5002, 102, 3002, 3000, 'Paid'),
+(5003, 103, 3003, 8000, 'Pending'),
+(5004, 104, 3004, 2000, 'Pending'),
+(5005, 105, 3005, 1500, 'Paid'),
+(5006, 106, 3007, 1000, 'Paid');
+
+select * from bills;
+
+
+----Doctor_wise_Appointment_Count
+
+select 
+d.doctor_name,
+count(a.appointment_id) as total_appointments
+from doctors d
+left join appointments a
+on d.doctor_id = a.doctor_id
+group by d.doctor_name
+order by total_appointments desc;
+
+
+----Department_wise_Patient_Count
+
+select 
+dp.department_name,
+count(distinct a.patient_id) as total_patients
+from departments dp
+left join doctors d
+on dp.department_id = d.department_id
+left join appointments a
+on d.doctor_id = a.doctor_id
+group by dp.department_name
+order by total_patients desc;
+
+
+----Total_Hospital_Revenue
+
+select 
+sum(b.bill_amount) as total_hospital_revenue
+from bills b
+where b.payment_status = 'Paid';
+
+
+----Pending_Bills
+
+select 
+p.patient_name,
+b.bill_id,
+b.bill_amount,
+b.payment_status
+from patients p
+inner join bills b
+on p.patient_id = b.patient_id
+where b.payment_status = 'Pending';
+
+
+----Department_wise_Doctor_Count
+
+select 
+dp.department_name,
+count(d.doctor_id) as total_doctors
+from departments dp
+left join doctors d
+on dp.department_id = d.department_id
+group by dp.department_name;
+
+
+----Appointment_Status_Count
+
+select 
+status,
+count(appointment_id) as total_appointments
+from appointments
+group by status;
+
+
+----Highest_Bill
+
+select 
+p.patient_name,
+b.bill_amount
+from patients p
+inner join bills b
+on p.patient_id = b.patient_id
+order by b.bill_amount desc
+limit 1;
+
+
+----Patients_without_Appointments
+
+select 
+p.patient_name
+from patients p
+left join appointments a
+on p.patient_id = a.patient_id
+where a.appointment_id is null;
+
+
+----Doctor_with_Highest_Appointments
+
+select 
+d.doctor_name,
+count(a.appointment_id) as total_appointments
+from doctors d
+inner join appointments a
+on d.doctor_id = a.doctor_id
+group by d.doctor_name
+order by total_appointments desc
+limit 1;
+
+
+----Monthly_Hospital_Revenue
+
+select 
+month(b.bill_date) as month_number,
+sum(b.bill_amount) as monthly_revenue
+from bills b
+where b.payment_status = 'Paid'
+group by month(b.bill_date)
+order by month_number;
